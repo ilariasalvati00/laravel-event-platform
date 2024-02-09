@@ -10,7 +10,7 @@ class Event extends Model
     use HasFactory;
 
     public function tags(){
-        return $this->belongsToMany(Event::class);
+        return $this->belongsToMany(Tag::class);
     }
 
     public function user(){

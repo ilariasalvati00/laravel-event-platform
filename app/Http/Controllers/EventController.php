@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
+use Illuminate\Support\Facades\Auth;
+
+use App\Models\Tag;
 
 class EventController extends Controller
 {
@@ -27,7 +30,8 @@ class EventController extends Controller
      */
     public function create()
     {
-        return view("admin.events.create");
+        $tags = Tag::all();
+        return view("admin.events.create", compact("tags"));
     }
 
     /**
@@ -38,7 +42,19 @@ class EventController extends Controller
      */
     public function store(StoreEventRequest $request)
     {
-        //
+        $dati = $request->validated();
+        
+        $nuovoevento = new Event();
+        $nuovoevento->name = $dati['name'];
+        $nuovoevento->date = $dati['date'];
+        $nuovoevento->user_id = Auth::id();
+        $nuovoevento->available_tickets = $dati['tickets'];
+        $nuovoevento->save();
+        foreach ($dati["tags"] as $tag_id){
+            $nuovoevento->tags()->attach($tag_id);
+        }
+
+        return redirect()->route("admin.events.index");
     }
 
     /**
@@ -49,7 +65,7 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        //
+        return view("admin.events.show", compact("event"));
     }
 
     /**
@@ -60,7 +76,8 @@ class EventController extends Controller
      */
     public function edit(Event $event)
     {
-        //
+        $tags = Tag::all();
+        return view("admin.events.edit" , compact("event", "tags"));
     }
 
     /**
@@ -72,7 +89,19 @@ class EventController extends Controller
      */
     public function update(UpdateEventRequest $request, Event $event)
     {
-        //
+        $dati = $request->validated();
+        
+        $event->name = $dati['name'];
+        $event->date = $dati['date'];
+        $event->user_id = Auth::id();
+        $event->available_tickets = $dati['tickets'];
+        $event->save();
+        $event->tags()->detach();
+        foreach ($dati["tags"] as $tag_id){
+            $event->tags()->attach($tag_id);
+        }
+
+        return redirect()->route("admin.events.show", $event->id);
     }
 
     /**
@@ -83,6 +112,7 @@ class EventController extends Controller
      */
     public function destroy(Event $event)
     {
-        //
+        $event->delete();
+        return redirect()->route("admin.events.index");
     }
 }
